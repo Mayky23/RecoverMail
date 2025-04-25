@@ -1,4 +1,4 @@
-# RecoverMail - Herramienta Forense de Recuperación de Correos Electrónicos
+# ​📧​🔓​ RecoverMail - Herramienta Forense de Recuperación de Correos Electrónicos
 
 **Versión:** 3.0  
 **Autor:** MARH  
@@ -51,7 +51,7 @@ Para ejecutar RecoverMail, necesitarás lo siguiente:
 
 ---
 
-## Instalación
+## ​🛠️​ Instalación
 
 ### 1. Clona este repositorio o descarga los archivos:
 ```bash
