@@ -1,109 +1,104 @@
-# ​📧​🔓​ RecoverMail - Herramienta Forense de Recuperación de Correos Electrónicos
+# RecoverMail — MBOX Forensics Toolkit 📨
 
-**Versión:** 3.0  
-**Autor:** MARH  
+Suite forense para **analizar archivos MBOX** (aunque no tengan extensión), extraer metadatos, cuerpos y adjuntos (solo metadatos), y generar informes **PDF / HTML / JSON** sin modificar el original.
 
----
-
-## Descripción
-
-RecoverMail es una herramienta forense diseñada para analizar y extraer información detallada de archivos MBOX, comúnmente utilizados para almacenar correos electrónicos. La herramienta permite generar informes en múltiples formatos (PDF, HTML y JSON) con el fin de facilitar la investigación forense y el análisis de datos.
-
-Con RecoverMail, puedes:
-
-- **Detectar automáticamente archivos MBOX**, incluso si no tienen extensión.
-- **Extraer metadatos** como remitentes, destinatarios, asuntos, fechas y contenido de los correos.
-- **Generar informes visuales y estructurados** que resumen el análisis forense.
-- **Exportar resultados** en formatos compatibles con diferentes necesidades de análisis.
+> Pensado para respuesta a incidentes, e-discovery, auditorías y análisis post-mortem.
 
 ---
 
-## Características principales
+## Características
 
-1. **Compatibilidad con MBOX:**
-   - Soporte para archivos `.mbox` y archivos sin extensión detectados como MBOX.
-   - Análisis robusto de metadatos y contenido de correos.
-
-2. **Resúmenes interactivos:**
-   - Informes en terminal con tablas claras y organizadas.
-   - Exportación a PDF, HTML y JSON para compartir y documentar hallazgos.
-
-3. **Extracción de detalles:**
-   - Identificación de remitentes, destinatarios, fechas y asuntos.
-   - Extracción del cuerpo del correo (texto plano) con manejo de errores.
-
-4. **Interfaz amigable:**
-   - Diseño visual con la biblioteca `rich` para mejorar la experiencia en terminal.
-   - Informes generados con diseño limpio y profesional.
+- Detección de MBOX por firma (`From `) y extensiones comunes.
+- Extracción robusta de:
+  - `From / To / Cc / Bcc`
+  - `Subject` (decodifica MIME headers)
+  - `Date` (normaliza a **UTC ISO 8601** cuando se puede)
+  - `Message-ID`
+  - `Body` (`text/plain` o `text/html` convertido a texto)
+  - Adjuntos (**solo metadatos**: nombre, tipo, tamaño)
+- Métricas útiles:
+  - Top remitentes/destinatarios/asuntos/dominios
+  - Duplicados por `sha256` del cuerpo (si se incluye body)
+  - Conteo de adjuntos
+- Informes:
+  - **HTML** con búsqueda y detalles desplegables
+  - **JSON** estructurado (ideal para automatizar)
+  - **PDF** con resumen y tablas
 
 ---
 
 ## Requisitos
 
-Para ejecutar RecoverMail, necesitarás lo siguiente:
-
-- **Python 3.8+**
-- Bibliotecas requeridas (instala usando `pip install -r requirements.txt`):
+- Python **3.9+** (recomendado 3.11+)
+- Dependencias:
   - `rich`
-  - `mailbox`
-  - `reportlab`
-  - `argparse`
+  - `reportlab` (solo para exportar PDF)
 
----
+Instalación rápida:
 
-## ​🛠️​ Instalación
-
-### 1. Clona este repositorio o descarga los archivos:
 ```bash
-git clone https://github.com/Mayky23/RecoverMail.git
-cd RecoverMail
-```
-### 2. Instala las dependencias:
-```bash
-pip install -r requirements.txt
-```
-### 3. Verifica la instalación ejecutando el comando de ayuda:
-```bash
-python recovermail.py --help
+pip install rich reportlab
 ```
 
 ---
 
 ## Uso
 
-### Sintaxis básica
-```bash
-python recovermail.py [archivos] [--output PREFIJO]
-```
-### Ejemplo de uso
-Analiza un archivo MBOX y genera informes en PDF, HTML y JSON:
+### Analizar un MBOX y generar informes
 
 ```bash
-python recovermail.py correo.mbox --output resultados
+python recovermail.py correo.mbox -o informe
 ```
-Analiza múltiples archivos MBOX:
+
+Genera (por defecto) en el directorio actual:
+
+- `informe.html`
+- `informe.json`
+- `informe.pdf`
+
+### Analizar varios archivos
 
 ```bash
-python recovermail.py correo1.mbox correo2.mbox --output analisis
+python recovermail.py correo1.mbox correo2.mbox -o caso_001 --outdir resultados
+```
+
+### Analizar una carpeta (y subcarpetas)
+
+```bash
+python recovermail.py ./evidencias_mail/ --recursive -o caso_002 --outdir resultados
 ```
 
 ---
 
-## Opciones
+## Opciones CLI
 
-| Opción      | Descripción                                      |
-|-------------|--------------------------------------------------|
-| `files`     | Archivos MBOX a analizar (uno o varios).         |
-| `--output`  | Prefijo para los archivos de salida (opcional).  |
+- `-o, --output`: prefijo de salida (sin extensión)
+- `--outdir`: carpeta de salida (se crea si no existe)
+- `--recursive`: buscar MBOX dentro de subcarpetas
+- `--max-body-chars`: límite de caracteres del body en HTML/JSON (`0` = sin límite)
+- `--top`: tamaño de listas “Top” (remitentes/asuntos/dominios)
+- `--no-body`: **no** extraer body (más rápido y ligero)
+- `--prefer-html`: prioriza `text/html` convertido a texto sobre `text/plain`
+- `--no-html`, `--no-json`, `--no-pdf`: desactivar salidas
+
+Ejemplo “solo JSON, sin body”:
+
+```bash
+python recovermail.py correo.mbox --no-body --no-html --no-pdf -o salida --outdir out
+```
 
 ---
 
-## Salida
+## Formato del JSON (resumen)
 
-RecoverMail genera los siguientes archivos:
+El JSON es una lista de “artifacts” (uno por MBOX). Campos principales:
 
-| Tipo de archivo | Descripción                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| **Informe PDF** | Resumen de archivos analizados y detalles de cada correo extraído.          |
-| **Informe HTML**| Resumen interactivo con secciones desplegables para ver detalles de correos. |
-| **Archivo JSON**| Datos completos en formato estructurado para análisis avanzado.             |
+- `file`, `count`
+- `first_date_utc_iso`, `last_date_utc_iso`
+- `top_senders`, `top_recipients`, `top_subjects`, `top_sender_domains`
+- `attachments_total`, `duplicates_by_hash`
+- `emails[]` con:
+  - `from_`, `to`, `subject`, `date_utc_iso`, `message_id`
+  - `body`, `body_sha256`
+  - `attachments[]` (metadatos)
+  - `parse_warnings[]`
